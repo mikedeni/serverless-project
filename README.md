@@ -1,10 +1,10 @@
-# MyBrick — Construction SaaS Platform
+# 🚀 MyBrick — ENG23 3074
 
 > ระบบบริหารงานก่อสร้างแบบครบวงจร สร้างด้วย .NET 8 Web API + React/Vite containerize ด้วย Docker และ deploy บน Kubernetes ผ่าน Jenkins pipeline แบบอัตโนมัติ
 
 ---
 
-## สมาชิกในกลุ่ม
+## 👥 สมาชิกในกลุ่ม
 
 | รหัสนักศึกษา | ชื่อ-นามสกุล | ความรับผิดชอบ |
 |-------------|-------------|---------------|
@@ -15,7 +15,7 @@
 
 ---
 
-## ภาพรวมโปรเจค
+## 📌 ภาพรวมโปรเจค
 
 ### แอปพลิเคชัน
 - **ชื่อ:** MyBrick
@@ -66,7 +66,7 @@ Developer
 
 ---
 
-## โครงสร้าง Repository
+## 📁 โครงสร้าง Repository
 
 ```
 serverless-project/
@@ -117,7 +117,7 @@ serverless-project/
 
 ---
 
-## สิ่งที่ต้องติดตั้งก่อน (Prerequisites)
+## ⚙️ สิ่งที่ต้องติดตั้งก่อน (Prerequisites)
 
 | Tool | Version | หน้าที่ |
 |------|---------|---------|
@@ -135,7 +135,7 @@ serverless-project/
 
 ---
 
-## วิธีรันโปรเจค (Quick Start)
+## 🏃 วิธีรันโปรเจค (Quick Start)
 
 ### 1. Clone Repository
 
@@ -184,7 +184,7 @@ dotnet test backend.tests/ConstructionSaaS.Tests.csproj -v n
 
 ---
 
-## CI/CD Pipeline (Jenkins)
+## 🔄 CI/CD Pipeline (Jenkins)
 
 ### ลำดับการทำงาน
 
@@ -214,7 +214,7 @@ Checkout ──▶ Test (xUnit) ──▶ Docker Build ──▶ Push to Hub ─
 
 ---
 
-## Infrastructure as Code
+## 🏗️ Infrastructure as Code
 
 ### Terraform
 
@@ -238,7 +238,7 @@ ansible-playbook -i inventory playbook.yml
 
 ---
 
-## Kubernetes Deployment
+## ☸️ Kubernetes Deployment
 
 ### Apply Manifests
 
@@ -277,7 +277,7 @@ Metrics  : http://localhost:30154/metrics
 
 ---
 
-## Monitoring
+## 📊 Monitoring
 
 ### Prometheus
 
@@ -312,7 +312,7 @@ docker run -d -p 3000:3000 grafana/grafana
 
 ---
 
-## Branching Strategy
+## 🌿 Branching Strategy
 
 ```
 main        — production-ready, protected
@@ -328,7 +328,7 @@ feature/*   — พัฒนา feature แยกกัน
 
 ---
 
-## API Endpoints
+## 🧪 API Endpoints
 
 | Method | Endpoint | คำอธิบาย |
 |--------|----------|----------|
@@ -347,7 +347,7 @@ feature/*   — พัฒนา feature แยกกัน
 
 ---
 
-## ปัญหาที่พบบ่อย (Troubleshooting)
+## 🐛 ปัญหาที่พบบ่อย (Troubleshooting)
 
 **Pods ค้างอยู่ที่ `Pending`**
 ```bash
@@ -380,7 +380,7 @@ terraform import kubernetes_namespace.mybrick production
 
 ---
 
-## เอกสารอ้างอิง
+## 📚 เอกสารอ้างอิง
 
 - [ASP.NET Core Documentation](https://docs.microsoft.com/aspnet/core)
 - [React Documentation](https://react.dev)
