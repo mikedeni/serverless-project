@@ -271,3 +271,13 @@ curl http://localhost:5000/metrics
 
 - [Markdown Guide](https://markdownguide.org)
 - [GitHub Docs](https://docs.github.com)
+
+---
+
+## 🔗 Related
+
+- [[HOME]] — Vault index
+- [[PROJECT_GUIDE]] — How to complete each phase
+- [[INSTALL_GUIDE]] — Setup all deliverables
+- [[PIPELINE_CHECKLIST]] — Verify all deliverables done
+- [[DEMO_GUIDE]] — Present the project

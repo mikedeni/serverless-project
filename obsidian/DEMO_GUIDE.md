@@ -158,3 +158,13 @@ kubectl apply -f k8s/
 ```
 
 Show each component working independently — pipeline concept still demonstrated.
+
+---
+
+## 🔗 Related
+
+- [[HOME]] — Vault index
+- [[PIPELINE_CHECKLIST]] — Ordered checklist to verify before demo
+- [[COMMANDS_CHEATSHEET]] — Quick command lookup
+- [[INSTALL_GUIDE]] — Full setup if something isn't running
+- [[PROJECT_GUIDE]] — Phase breakdown reference

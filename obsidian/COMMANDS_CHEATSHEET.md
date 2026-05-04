@@ -237,3 +237,13 @@ docker compose down -v
 kubectl delete -f k8s/
 kubectl delete namespace production
 ```
+
+---
+
+## 🔗 Related
+
+- [[HOME]] — Vault index
+- [[PIPELINE_CHECKLIST]] — Run commands in order
+- [[INSTALL_GUIDE]] — Full setup walkthrough
+- [[MANUAL_RUN]] — Local run options
+- [[DEMO_GUIDE]] — Demo day commands

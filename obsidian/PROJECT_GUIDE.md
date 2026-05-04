@@ -541,3 +541,14 @@ terraform import kubernetes_namespace.app_ns production
 | Member 4 | Kubernetes + Monitoring (Phase 4–5) |
 
 > [!warning] Everyone must understand the full pipeline for the demo — not just their own part.
+
+---
+
+## 🔗 Related
+
+- [[HOME]] — Vault index
+- [[PROJECT_DESCRIPTION]] — Course spec and requirements
+- [[INSTALL_GUIDE]] — Step-by-step setup
+- [[PIPELINE_CHECKLIST]] — Quick tick-box version
+- [[COMMANDS_CHEATSHEET]] — All commands reference
+- [[DEMO_GUIDE]] — Demo day preparation

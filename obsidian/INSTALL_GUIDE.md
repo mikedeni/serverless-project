@@ -378,3 +378,14 @@ curl http://localhost:5154/metrics
 # Must return prometheus text format
 # If empty — MapMetrics() not registered in Program.cs
 ```
+
+---
+
+## 🔗 Related
+
+- [[HOME]] — Vault index
+- [[PIPELINE_CHECKLIST]] — Tick-box version of this guide
+- [[COMMANDS_CHEATSHEET]] — All commands in one place
+- [[MANUAL_RUN]] — Alternative run options (dev mode, per-service)
+- [[DEMO_GUIDE]] — After install: how to demo
+- [[PROJECT_GUIDE]] — Phase completion checklist

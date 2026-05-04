@@ -107,3 +107,13 @@ course: ENG23 3074
 - [ ] Each member knows their phase to explain
 - [ ] Architecture diagram ready (README → ภาพรวมโปรเจค)
 - [ ] Backup plan ready: `docker compose up -d` + `kubectl apply -f k8s/`
+
+---
+
+## 🔗 Related
+
+- [[HOME]] — Vault index
+- [[COMMANDS_CHEATSHEET]] — Commands for each phase
+- [[INSTALL_GUIDE]] — Detailed install steps
+- [[DEMO_GUIDE]] — Demo day script
+- [[PROJECT_GUIDE]] — Phase breakdown with code examples

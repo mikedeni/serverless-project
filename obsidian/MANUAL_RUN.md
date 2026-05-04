@@ -294,3 +294,13 @@ docker compose up db -d
 kubectl describe pod <pod-name> -n production
 # image mikedeni/mybrick-* ต้องเป็น public บน Docker Hub
 ```
+
+---
+
+## 🔗 Related
+
+- [[HOME]] — Vault index
+- [[INSTALL_GUIDE]] — Full pipeline install guide
+- [[COMMANDS_CHEATSHEET]] — All commands reference
+- [[PIPELINE_CHECKLIST]] — Ordered phase checklist
+- [[DEMO_GUIDE]] — Demo day script
