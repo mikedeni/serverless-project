@@ -132,6 +132,18 @@ roles/          # reusable configs
 | **Service** | Exposes Pods (ClusterIP / NodePort) | `kubectl apply -f service.yaml` · `kubectl get svc` |
 | **Namespace** | Logical separation (dev/staging/prod) | `kubectl create ns production` · `kubectl -n production get all` |
 
+### Expected Output
+```
+NAME                        READY   STATUS    RESTARTS   AGE
+[app-name]-xxxxxxxxx-xxxxx  1/1     Running   0          2m
+[app-name]-xxxxxxxxx-yyyyy  1/1     Running   0          2m
+
+NAME            TYPE       CLUSTER-IP     PORT(S)          AGE
+[app-name]-svc  NodePort   10.96.xx.xxx   5000:30080/TCP   2m
+```
+
+Access app: `http://localhost:30080`
+
 > [!note]
 > Kubernetes YAML files stored in repo and applied via Jenkins.
 
@@ -191,6 +203,67 @@ Developer
 
 ### Example System
 **Note API** — Python Flask · MySQL · Docker · Jenkins · Terraform · Ansible · Kubernetes · Prometheus · Grafana
+
+---
+
+## Branching Strategy
+
+```
+main        — production-ready, protected
+dev         — integration branch before merge to main
+feature/*   — individual feature development (e.g. feature/add-login)
+```
+
+| Branch | Protected | Trigger |
+|--------|-----------|---------|
+| `main` | ✅ | auto pipeline on merge |
+| `dev` | ✅ | test before merge to main |
+| `feature/*` | ❌ | merge into dev when done |
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | Health check |
+| `GET` | `/metrics` | Prometheus metrics |
+| `GET` | `/[resource]` | List resources |
+| `POST` | `/[resource]` | Create resource |
+| `DELETE` | `/[resource]/:id` | Delete resource |
+
+---
+
+## Monitoring Metrics (PromQL)
+
+| Panel | PromQL | Shows |
+|-------|--------|-------|
+| Request Rate | `rate(http_requests_total[1m])` | requests/sec |
+| Error Rate | `rate(http_requests_total{status=~"5.."}[1m])` | 5xx errors/sec |
+| Latency p95 | `histogram_quantile(0.95, ...)` | 95th percentile response time |
+| Pod Health | `up{job="[app-name]"}` | service up/down (1/0) |
+
+---
+
+## Troubleshooting
+
+**Pods stuck at `Pending`**
+```bash
+kubectl describe pod [pod-name] -n [namespace]
+# Check Events: resource limits or image pull error
+```
+
+**Jenkins pipeline fails at Docker Build**
+```bash
+sudo systemctl start docker
+sudo usermod -aG docker jenkins
+```
+
+**Prometheus target shows DOWN**
+```bash
+curl http://localhost:5000/metrics
+# Verify host:port in prometheus.yml matches app
+```
 
 ---
 
