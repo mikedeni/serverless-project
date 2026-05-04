@@ -19,6 +19,8 @@ course: ENG23 3074
 - [[INSTALL_GUIDE]] — Full installation and setup guide
 - [[MANUAL_RUN]] — Manual run guide (Docker Compose, dev mode, Kubernetes)
 - [[DEMO_GUIDE]] — Live demo script and pre-demo checklist
+- [[PIPELINE_CHECKLIST]] — Ordered tick-box checklist for full pipeline
+- [[COMMANDS_CHEATSHEET]] — Every command in one place
 
 ---
 
@@ -31,6 +33,8 @@ course: ENG23 3074
 | Install everything | [[INSTALL_GUIDE]] |
 | Run locally | [[MANUAL_RUN]] |
 | Demo day | [[DEMO_GUIDE]] |
+| Run pipeline in order | [[PIPELINE_CHECKLIST]] |
+| Quick command lookup | [[COMMANDS_CHEATSHEET]] |
 
 ---
 
