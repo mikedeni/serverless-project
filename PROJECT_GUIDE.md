@@ -143,8 +143,8 @@ pipeline {
     agent any
 
     environment {
-        BACKEND_IMAGE  = "yourdockerhubuser/mybrick-backend"
-        FRONTEND_IMAGE = "yourdockerhubuser/mybrick-frontend"
+        BACKEND_IMAGE  = "mikedeni/mybrick-backend"
+        FRONTEND_IMAGE = "mikedeni/mybrick-frontend"
         IMAGE_TAG      = "${BUILD_NUMBER}"
     }
 
@@ -307,7 +307,7 @@ spec:
     spec:
       containers:
         - name: mybrick-backend
-          image: yourdockerhubuser/mybrick-backend:latest
+          image: mikedeni/mybrick-backend:latest
           ports:
             - containerPort: 5154
           env:
@@ -344,7 +344,7 @@ spec:
     spec:
       containers:
         - name: mybrick-frontend
-          image: yourdockerhubuser/mybrick-frontend:latest
+          image: mikedeni/mybrick-frontend:latest
           ports:
             - containerPort: 80
 ```

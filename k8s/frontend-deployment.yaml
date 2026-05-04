@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: mybrick-frontend
-          image: yourdockerhubuser/mybrick-frontend:latest
+          image: mikedeni/mybrick-frontend:latest
           ports:
             - containerPort: 80
           readinessProbe:

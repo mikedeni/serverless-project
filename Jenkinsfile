@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        BACKEND_IMAGE  = "yourdockerhubuser/mybrick-backend"
-        FRONTEND_IMAGE = "yourdockerhubuser/mybrick-frontend"
+        BACKEND_IMAGE  = "mikedeni/mybrick-backend"
+        FRONTEND_IMAGE = "mikedeni/mybrick-frontend"
         IMAGE_TAG      = "${BUILD_NUMBER}"
     }
 

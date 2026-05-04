@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: mybrick-backend
-          image: yourdockerhubuser/mybrick-backend:latest
+          image: mikedeni/mybrick-backend:latest
           ports:
             - containerPort: 5154
           env:
