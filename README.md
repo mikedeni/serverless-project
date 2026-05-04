@@ -1,11 +1,10 @@
-# 🚀 [ชื่อโปรเจค] — ENG23 3074
+# MyBrick — Construction SaaS Platform
 
-> _อธิบายโปรเจคสั้น ๆ ในประโยคเดียว_  
-> **ตัวอย่าง:** ระบบ API บันทึกโน้ต สร้างด้วย Python Flask containerize ด้วย Docker และ deploy บน Kubernetes ผ่าน Jenkins pipeline แบบอัตโนมัติ
+> ระบบบริหารงานก่อสร้างแบบครบวงจร สร้างด้วย .NET 8 Web API + React/Vite containerize ด้วย Docker และ deploy บน Kubernetes ผ่าน Jenkins pipeline แบบอัตโนมัติ
 
 ---
 
-## 👥 สมาชิกในกลุ่ม
+## สมาชิกในกลุ่ม
 
 | รหัสนักศึกษา | ชื่อ-นามสกุล | ความรับผิดชอบ |
 |-------------|-------------|---------------|
@@ -16,15 +15,17 @@
 
 ---
 
-## 📌 ภาพรวมโปรเจค
+## ภาพรวมโปรเจค
 
 ### แอปพลิเคชัน
-- **ชื่อ:** [ชื่อแอป]
-- **ประเภท:** [เช่น REST API / Web App]
-- **ภาษา / Framework:** [เช่น Python Flask / Node.js Express]
-- **คำอธิบาย:** [อธิบาย 2–3 ประโยคว่าแอปทำอะไร ใช้แก้ปัญหาอะไร]
+- **ชื่อ:** MyBrick
+- **ประเภท:** REST API + Web Application
+- **Backend:** .NET 8 ASP.NET Core Web API + Dapper + MySQL 8
+- **Frontend:** React 18 + Vite + Axios
+- **คำอธิบาย:** ระบบบริหารงานก่อสร้างสำหรับบริษัทรับเหมา รองรับการจัดการโปรเจค, คนงาน, วัสดุ, ค่าใช้จ่าย, ใบเสนอราคา และรายงาน พร้อม Prometheus metrics
 
 ### Architecture Diagram
+
 ```
 Developer
     │
@@ -34,6 +35,7 @@ Developer
                     ┌───────────┼───────────┐
                     ▼           ▼           ▼
                  Build        Test      Docker Build
+              (dotnet)      (xUnit)  (backend+frontend)
                                             │
                                             ▼
                                        Docker Hub
@@ -41,271 +43,351 @@ Developer
                                     ┌───────┴───────┐
                                     ▼               ▼
                                 Terraform        Ansible
+                             (namespace)    (kubectl config)
                                     │               │
                                     └───────┬───────┘
                                             ▼
-                                   Kubernetes Cluster
-                                   ┌────────────────┐
-                                   │  Pod 1  Pod 2  │
-                                   │  [App]  [App]  │
-                                   │                │
-                                   │  Service (NodePort :XXXXX)  │
-                                   └────────────────┘
+                                   Kubernetes Cluster (OrbStack)
+                              ┌─────────────────────────────┐
+                              │  namespace: production       │
+                              │                             │
+                              │  mybrick-backend  x2 pods  │
+                              │  mybrick-frontend x2 pods  │
+                              │                             │
+                              │  backend-svc  :30154        │
+                              │  frontend-svc :30080        │
+                              └─────────────────────────────┘
                                             │
                               ┌─────────────┴──────────────┐
                               ▼                             ▼
                           Prometheus  ──────────────▶  Grafana
-                        (scrape /metrics)            (dashboard)
+                     (scrape :30154/metrics)         (dashboard)
 ```
 
 ---
 
-## 📁 โครงสร้าง Repository
+## โครงสร้าง Repository
 
 ```
-[project-name]/
+serverless-project/
 ├── app/
-│   ├── app.py                  # โค้ดหลักของแอปพลิเคชัน
-│   ├── requirements.txt        # Python dependencies
-│   └── Dockerfile              # คำสั่งสร้าง Docker image
-├── Jenkinsfile                 # กำหนด CI/CD pipeline ทุก stage
+│   ├── backend/                  # .NET 8 ASP.NET Core Web API
+│   │   ├── Controllers/          # REST endpoints
+│   │   ├── Services/             # Business logic
+│   │   ├── Repositories/         # Dapper data access
+│   │   ├── Models/               # Domain models
+│   │   ├── DTOs/                 # Request/response shapes
+│   │   ├── Data/                 # DapperContext
+│   │   ├── Monitoring/           # BusinessMetrics (prometheus-net)
+│   │   ├── Program.cs
+│   │   ├── appsettings.json
+│   │   └── Dockerfile
+│   ├── backend.tests/            # xUnit test project
+│   │   ├── ProjectServiceTests.cs
+│   │   ├── DashboardServiceTests.cs
+│   │   └── ReportServiceTests.cs
+│   ├── frontend/                 # React + Vite
+│   │   ├── src/
+│   │   │   ├── pages/
+│   │   │   ├── components/
+│   │   │   ├── contexts/         # AuthContext (JWT)
+│   │   │   └── utils/api.js      # Axios wrapper
+│   │   └── Dockerfile
+│   ├── database/
+│   │   ├── schema.sql            # Full DDL
+│   │   └── update.sql            # Migration patches
+│   ├── docker-compose.yml
+│   └── prometheus.yml
+├── Jenkinsfile
 ├── terraform/
-│   ├── main.tf                 # กำหนด resource ที่จะ provision
-│   ├── variables.tf            # ตัวแปร input
-│   └── outputs.tf              # ค่า output หลัง apply
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
 ├── ansible/
-│   ├── inventory               # รายชื่อ host เป้าหมาย
-│   └── playbook.yml            # tasks สำหรับ configure environment
+│   ├── inventory
+│   └── playbook.yml
 ├── k8s/
-│   ├── deployment.yaml         # กำหนด Pods และ replicas
-│   └── service.yaml            # เปิดพอร์ตให้เข้าถึงแอปจากภายนอก
+│   ├── backend-deployment.yaml
+│   ├── frontend-deployment.yaml
+│   └── services.yaml
 ├── monitoring/
-│   ├── prometheus.yml          # ตั้งค่า scrape target
-│   └── grafana-dashboard.json  # Dashboard ที่ export จาก Grafana
+│   └── grafana-dashboard.json
 └── README.md
 ```
 
 ---
 
-## ⚙️ สิ่งที่ต้องติดตั้งก่อน (Prerequisites)
-
-ตรวจสอบให้แน่ใจว่าติดตั้งทุก tool ครบก่อนรันโปรเจค
+## สิ่งที่ต้องติดตั้งก่อน (Prerequisites)
 
 | Tool | Version | หน้าที่ |
 |------|---------|---------|
 | Git | ≥ 2.x | จัดการ source code |
 | Docker | ≥ 24.x | สร้างและรัน container |
-| Jenkins | ≥ 2.4xx | ระบบ CI/CD automation |
+| .NET SDK | 8.0 | build และ test backend |
+| Node.js | ≥ 20.x | build frontend |
+| Jenkins | ≥ 2.4xx | CI/CD automation |
 | Terraform | ≥ 1.x | Provision infrastructure |
 | Ansible | ≥ 2.15 | Configure environment |
-| kubectl | ≥ 1.28 | สั่งงาน Kubernetes cluster |
-| Minikube / K3s | latest | Kubernetes แบบ local |
+| kubectl | ≥ 1.28 | สั่งงาน Kubernetes |
+| OrbStack / Minikube | latest | Kubernetes local |
 | Prometheus | ≥ 2.x | เก็บ metrics |
 | Grafana | ≥ 10.x | แสดง dashboard |
 
 ---
 
-## 🏃 วิธีรันโปรเจค (Quick Start)
+## วิธีรันโปรเจค (Quick Start)
 
 ### 1. Clone Repository
+
 ```bash
-git clone https://github.com/[username]/[project-name].git
-cd [project-name]
+git clone https://github.com/mikedeni/serverless-project.git
+cd serverless-project
 ```
 
-### 2. รันแอปบนเครื่องโดยตรง (ไม่ผ่าน pipeline)
+### 2. รันด้วย Docker Compose (ทั้งระบบ)
+
 ```bash
 cd app
-pip install -r requirements.txt
-python app.py
-# แอปรันที่ http://localhost:5000
+docker compose up -d
 ```
 
-### 3. Build และรันด้วย Docker
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:80 |
+| Backend API | http://localhost:5154 |
+| Swagger | http://localhost:5154/swagger |
+| Metrics | http://localhost:5154/metrics |
+| Prometheus | http://localhost:9090 |
+
+### 3. รัน Backend โดยตรง (dev)
+
 ```bash
-docker build -t [username]/[app-name]:latest ./app
-docker run -p 5000:5000 [username]/[app-name]:latest
+cd app/backend
+dotnet run
+```
+
+### 4. รัน Frontend โดยตรง (dev)
+
+```bash
+cd app/frontend
+npm install
+npm run dev
+# http://localhost:5173
+```
+
+### 5. รัน Tests
+
+```bash
+cd app
+dotnet test backend.tests/ConstructionSaaS.Tests.csproj -v n
 ```
 
 ---
 
-## 🔄 CI/CD Pipeline (Jenkins)
+## CI/CD Pipeline (Jenkins)
 
-### ลำดับการทำงานของ Pipeline
+### ลำดับการทำงาน
 
 ```
-Checkout ──▶ Build ──▶ Test ──▶ Docker Build ──▶ Push to Hub ──▶ Deploy
+Checkout ──▶ Test (xUnit) ──▶ Docker Build ──▶ Push to Hub ──▶ Deploy
 ```
 
 | Stage | คำอธิบาย |
 |-------|----------|
 | **Checkout** | ดึงโค้ดล่าสุดจาก GitHub |
-| **Build** | ติดตั้ง dependencies |
-| **Test** | รัน unit test |
-| **Docker Build** | สร้าง Docker image |
+| **Test** | รัน xUnit tests สำหรับ backend |
+| **Docker Build** | สร้าง image mybrick-backend + mybrick-frontend |
 | **Push to Hub** | อัปโหลด image ขึ้น Docker Hub |
-| **Deploy** | รัน Terraform + Ansible แล้ว apply Kubernetes manifests |
+| **Deploy** | Terraform + Ansible + kubectl apply |
 
 ### วิธีตั้งค่า Jenkins
+
 1. ติดตั้ง Jenkins และเปิดที่ `http://localhost:8080`
 2. ติดตั้ง plugin: **Git**, **Pipeline**, **Docker Pipeline**
-3. เพิ่ม credentials สำหรับ Docker Hub (ชื่อ `dockerhub-credentials`)
-4. สร้าง Pipeline job ใหม่ และชี้ไปที่ repository นี้
+3. เพิ่ม credentials ID `dockerhub-credentials` (Username/Password)
+4. สร้าง Pipeline job ชี้ไปที่ repository นี้
 5. ตั้งค่า Webhook ใน GitHub:
-   - ไปที่ **Settings → Webhooks → Add webhook**
+   - **Settings → Webhooks → Add webhook**
    - Payload URL: `http://[jenkins-host]:8080/github-webhook/`
    - Content type: `application/json`
-   - ติ๊ก trigger: **Just the push event**
+   - Trigger: **Just the push event**
 
 ---
 
-## 🏗️ Infrastructure as Code
+## Infrastructure as Code
 
-### Terraform — Provision Infrastructure
+### Terraform
+
 ```bash
 cd terraform
-terraform init      # ดาวน์โหลด provider plugins
-terraform plan      # ตรวจสอบว่าจะสร้างอะไรบ้าง
-terraform apply     # สร้าง resource จริง
+terraform init
+terraform plan
+terraform apply
 ```
-> **สิ่งที่ Terraform สร้าง:** [อธิบาย เช่น Docker network, Kubernetes namespace, local directory]
 
-### Ansible — Configure Environment
+สิ่งที่ Terraform สร้าง: Kubernetes namespace `production`
+
+### Ansible
+
 ```bash
 cd ansible
 ansible-playbook -i inventory playbook.yml
 ```
-> **สิ่งที่ Ansible ทำ:** [อธิบาย เช่น ติดตั้ง kubectl, copy kubeconfig, ตั้งค่า environment variable]
 
-> ⚠️ **หมายเหตุ:** ใน pipeline จริง Jenkins จะเรียก Terraform และ Ansible อัตโนมัติในขั้นตอน Deploy ไม่ต้องรันด้วยมือ
+สิ่งที่ Ansible ทำ: ตรวจสอบ kubectl, ตั้งค่า context `orbstack`, สร้าง namespace ถ้าไม่มี
 
 ---
 
-## ☸️ Kubernetes Deployment
+## Kubernetes Deployment
 
-### Apply Manifests ด้วยตัวเอง
+### Apply Manifests
+
 ```bash
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/
 ```
 
 ### ตรวจสอบสถานะ
+
 ```bash
-kubectl get pods -n [namespace]
-kubectl get svc  -n [namespace]
+kubectl get pods -n production
+kubectl get svc  -n production
 ```
 
-### ผลลัพธ์ที่ควรจะได้
-```
-NAME                        READY   STATUS    RESTARTS   AGE
-[app-name]-xxxxxxxxx-xxxxx  1/1     Running   0          2m
-[app-name]-xxxxxxxxx-yyyyy  1/1     Running   0          2m
+### ผลลัพธ์ที่ควรได้
 
-NAME            TYPE       CLUSTER-IP     PORT(S)          AGE
-[app-name]-svc  NodePort   10.96.xx.xxx   5000:30080/TCP   2m
+```
+NAME                                READY   STATUS    RESTARTS   AGE
+mybrick-backend-xxxxxxxxx-xxxxx     1/1     Running   0          2m
+mybrick-backend-xxxxxxxxx-yyyyy     1/1     Running   0          2m
+mybrick-frontend-xxxxxxxxx-aaaaa    1/1     Running   0          2m
+mybrick-frontend-xxxxxxxxx-bbbbb    1/1     Running   0          2m
+
+NAME                   TYPE       CLUSTER-IP     PORT(S)          AGE
+mybrick-backend-svc    NodePort   10.96.xx.xxx   5154:30154/TCP   2m
+mybrick-frontend-svc   NodePort   10.96.xx.yyy   80:30080/TCP     2m
 ```
 
-### เข้าถึงแอปพลิเคชัน
+### เข้าถึงแอปพลิเคชัน (via Kubernetes)
+
 ```
-http://localhost:30080
+Frontend : http://localhost:30080
+Backend  : http://localhost:30154
+Metrics  : http://localhost:30154/metrics
 ```
 
 ---
 
-## 📊 Monitoring
+## Monitoring
 
-### Prometheus — เก็บ Metrics
-- ไฟล์ config: `monitoring/prometheus.yml`
-- Scrape ทุก **15 วินาที**
-- Target endpoint: `http://[app-host]:[port]/metrics`
+### Prometheus
 
-รัน Prometheus:
+Scrape config อยู่ใน `app/prometheus.yml` — ดึง metrics จาก backend ทุก 15 วินาที
+
 ```bash
-prometheus --config.file=monitoring/prometheus.yml
-# เปิด UI ที่ http://localhost:9090
+# รันผ่าน Docker Compose (อยู่ใน app/docker-compose.yml แล้ว)
+cd app && docker compose up prometheus
+# UI: http://localhost:9090
 ```
 
-### Grafana — แสดง Dashboard
-- ไฟล์ dashboard: `monitoring/grafana-dashboard.json`
-- Data source: Prometheus (`http://localhost:9090`)
+### Grafana
 
-วิธี import dashboard:
-1. เปิด Grafana ที่ `http://localhost:3000`
-2. ไปที่ **Dashboards → Import**
-3. อัปโหลดไฟล์ `grafana-dashboard.json`
+```bash
+docker run -d -p 3000:3000 grafana/grafana
+# UI: http://localhost:3000 (admin/admin)
+```
+
+1. Add datasource: **Prometheus** → `http://localhost:9090`
+2. Import dashboard: **Dashboards → Import** → อัปโหลด `monitoring/grafana-dashboard.json`
 
 ### Panels ใน Dashboard
 
-| Panel | Metric (PromQL) | แสดงข้อมูลอะไร |
-|-------|-----------------|----------------|
-| Request Rate | `rate(http_requests_total[1m])` | จำนวน request ต่อวินาที |
-| Error Rate | `rate(http_requests_total{status=~"5.."}[1m])` | จำนวน error 5xx ต่อวินาที |
-| Latency (p95) | `histogram_quantile(0.95, ...)` | response time ที่ percentile 95 |
-| Pod Health | `up{job="[app-name]"}` | service ขึ้นหรือล่ม (1/0) |
+| Panel | PromQL | แสดงข้อมูล |
+|-------|--------|-----------|
+| Request Rate | `rate(http_requests_received_total[1m])` | req/s |
+| Error Rate | `rate(http_requests_received_total{code=~"5.."}[1m])` | 5xx/s |
+| Latency p95 | `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))` | response time |
+| Pod Health | `up{job="mybrick-backend"}` | up/down |
+| Total Projects | `mybrick_projects_total` | จำนวนโปรเจค |
+| Total Expenses | `mybrick_expenses_total_baht` | ค่าใช้จ่าย (THB) |
 
 ---
 
-## 🌿 Branching Strategy
+## Branching Strategy
 
 ```
-main        ──── โค้ดที่พร้อม production, protected branch
-dev         ──── รวมโค้ดก่อน merge ขึ้น main
-feature/*   ──── พัฒนา feature แต่ละอัน (เช่น feature/add-login)
+main        — production-ready, protected
+dev         — integration ก่อน merge ขึ้น main
+feature/*   — พัฒนา feature แยกกัน
 ```
 
-| Branch | Protected | คำอธิบาย |
-|--------|-----------|----------|
-| `main` | ✅ | trigger pipeline อัตโนมัติเมื่อ merge |
+| Branch | Protected | Trigger |
+|--------|-----------|---------|
+| `main` | ✅ | auto pipeline on merge |
 | `dev` | ✅ | ทดสอบก่อน merge ขึ้น main |
-| `feature/*` | ❌ | พัฒนาแยกกันแล้วค่อย merge เข้า dev |
+| `feature/*` | ❌ | merge เข้า dev เมื่อเสร็จ |
 
 ---
 
-## 🧪 API Endpoints
+## API Endpoints
 
 | Method | Endpoint | คำอธิบาย |
 |--------|----------|----------|
-| `GET` | `/` | Health check — ตรวจว่าแอปยังรันอยู่ |
-| `GET` | `/metrics` | Prometheus metrics endpoint |
-| `GET` | `/[resource]` | [อธิบาย] |
-| `POST` | `/[resource]` | [อธิบาย] |
-| `DELETE` | `/[resource]/:id` | [อธิบาย] |
+| `GET` | `/metrics` | Prometheus metrics |
+| `POST` | `/api/auth/login` | เข้าสู่ระบบ |
+| `POST` | `/api/auth/register` | สมัครสมาชิก |
+| `GET/POST` | `/api/projects` | รายการ / สร้างโปรเจค |
+| `GET/POST` | `/api/workers` | รายการ / เพิ่มคนงาน |
+| `GET/POST` | `/api/materials` | รายการ / เพิ่มวัสดุ |
+| `GET/POST` | `/api/tasks` | รายการ / สร้างงาน |
+| `GET/POST` | `/api/expenses` | รายการ / เพิ่มค่าใช้จ่าย |
+| `GET/POST` | `/api/invoices` | รายการ / สร้างใบแจ้งหนี้ |
+| `GET/POST` | `/api/quotations` | รายการ / สร้างใบเสนอราคา |
+| `GET` | `/api/dashboard` | ภาพรวม dashboard |
+| `GET` | `/api/reports/*` | รายงานต่าง ๆ |
 
 ---
 
-## 🐛 ปัญหาที่พบบ่อย (Troubleshooting)
+## ปัญหาที่พบบ่อย (Troubleshooting)
 
-**Pods ค้างอยู่ที่ `Pending` ไม่ยอม Running**
+**Pods ค้างอยู่ที่ `Pending`**
 ```bash
-kubectl describe pod [pod-name] -n [namespace]
-# ดูที่ Events: อาจเกิดจาก resource ไม่พอ หรือ image pull error
+kubectl describe pod [pod-name] -n production
+# ดูที่ Events section
 ```
 
-**Jenkins pipeline ล้มเหลวตอน Docker Build**
+**Backend ต่อ MySQL ไม่ได้**
 ```bash
-# ตรวจว่า Docker daemon รันอยู่
-sudo systemctl start docker
-# เพิ่ม jenkins user เข้า docker group
+kubectl get pods -n production | grep db
+# ตรวจ connection string ใน env ให้ตรงกับ service name
+```
+
+**Jenkins Docker Build ล้มเหลว**
+```bash
 sudo usermod -aG docker jenkins
+sudo systemctl restart jenkins
 ```
 
-**Prometheus แสดง target เป็น DOWN**
+**Prometheus target แสดง DOWN**
 ```bash
-# ตรวจว่าแอปเปิด /metrics ได้จริง
-curl http://localhost:5000/metrics
-# ตรวจ prometheus.yml ว่า host:port ตรงกับแอปจริง
+curl http://localhost:30154/metrics
+# ถ้าไม่มีข้อมูล — ตรวจว่า prometheus-net middleware ถูก register ใน Program.cs
+```
+
+**Terraform apply ล้มเหลว (namespace มีอยู่แล้ว)**
+```bash
+terraform import kubernetes_namespace.mybrick production
 ```
 
 ---
 
-## 📚 เอกสารอ้างอิง
+## เอกสารอ้างอิง
 
-- [Jenkinsfile Declarative Pipeline Syntax](https://www.jenkins.io/doc/book/pipeline/syntax/)
+- [ASP.NET Core Documentation](https://docs.microsoft.com/aspnet/core)
+- [React Documentation](https://react.dev)
+- [Jenkins Pipeline Syntax](https://www.jenkins.io/doc/book/pipeline/syntax/)
 - [Terraform Documentation](https://developer.hashicorp.com/terraform/docs)
 - [Ansible Documentation](https://docs.ansible.com/)
 - [Kubernetes Documentation](https://kubernetes.io/docs/)
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Documentation](https://grafana.com/docs/)
-- [Markdown Guide](https://www.markdownguide.org/)
-- [GitHub Markdown Syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
-
+- [prometheus-net](https://github.com/prometheus-net/prometheus-net)

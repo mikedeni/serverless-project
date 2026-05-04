@@ -1,0 +1,30 @@
+---
+- name: Configure MyBrick deployment environment
+  hosts: local
+  vars:
+    namespace: production
+    kube_context: orbstack
+
+  tasks:
+    - name: Verify kubectl available
+      command: kubectl version --client
+      register: kubectl_check
+      changed_when: false
+
+    - name: Set kubeconfig context
+      command: kubectl config use-context {{ kube_context }}
+      changed_when: false
+
+    - name: Verify cluster reachable
+      command: kubectl cluster-info
+      changed_when: false
+
+    - name: Ensure namespace exists
+      command: kubectl get namespace {{ namespace }}
+      register: ns_check
+      ignore_errors: true
+      changed_when: false
+
+    - name: Create namespace if missing
+      command: kubectl create namespace {{ namespace }}
+      when: ns_check.rc != 0

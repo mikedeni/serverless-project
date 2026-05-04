@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mybrick-backend
+  namespace: production
+  labels:
+    app: mybrick-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mybrick-backend
+  template:
+    metadata:
+      labels:
+        app: mybrick-backend
+    spec:
+      containers:
+        - name: mybrick-backend
+          image: yourdockerhubuser/mybrick-backend:latest
+          ports:
+            - containerPort: 5154
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=mybrick-db;Database=ConstructionSaaS;User=mybrick_user;Password=MyBrick@2026;"
+            - name: Jwt__Key
+              value: "super_secret_jwt_key_for_mybrick_construction_platform_2026"
+            - name: ASPNETCORE_URLS
+              value: "http://+:5154"
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 5154
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 5154
+            initialDelaySeconds: 20
+            periodSeconds: 15
