@@ -13,6 +13,9 @@ status: in-progress
 > [!abstract] Stack
 > Git → Jenkins → Docker → Terraform/Ansible → Kubernetes (OrbStack) → Prometheus/Grafana
 
+**App:** MyBrick — Construction SaaS platform
+**Stack:** .NET 8 (ASP.NET Core) + React/Vite + MySQL 8 + Docker Compose
+
 ---
 
 ## Checklist Overview
@@ -29,79 +32,74 @@ status: in-progress
 
 ## Phase 1 — App + Git
 
-### 1.1 Choose Your App
+### 1.1 App Overview
 
-Pick one simple app — keep it small, the pipeline is the point.
-
-| Option | Stack | Endpoints needed |
-|--------|-------|-----------------|
-| Note API | Python Flask + SQLite | GET/POST/DELETE `/notes` |
-| Task Tracker | Node.js Express + JSON | GET/POST/DELETE `/tasks` |
-| URL Shortener | Python Flask | GET `/:code`, POST `/shorten` |
-
-> [!tip] Recommendation
-> **Note API (Python Flask)** — most examples online, easiest to add `/metrics`.
-
-### 1.2 App Must Have
-
-- [ ] `GET /` → health check, returns `{"status": "ok"}`
-- [ ] `GET /metrics` → Prometheus metrics (use `prometheus_client` lib)
-- [ ] At least 2 business endpoints (list + create)
-- [ ] `requirements.txt` with pinned versions
-- [ ] Dockerfile
-
-### 1.3 Dockerfile Template
-
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-EXPOSE 5000
-CMD ["python", "app.py"]
+```
+app/
+├── backend/                  # ASP.NET Core Web API (.NET 8)
+│   ├── Controllers/          # REST endpoints (Auth, Projects, Workers, ...)
+│   ├── Services/             # Business logic
+│   ├── Repositories/         # Dapper data access (MySQL)
+│   ├── Models/               # Domain models
+│   ├── DTOs/                 # Request/response shapes
+│   ├── Data/                 # DapperContext (conn factory)
+│   ├── Monitoring/           # BusinessMetrics (prometheus-net)
+│   ├── Program.cs            # App bootstrap + DI
+│   ├── appsettings.json
+│   └── Dockerfile
+├── backend.tests/            # xUnit test project
+│   ├── ProjectServiceTests.cs
+│   ├── DashboardServiceTests.cs
+│   └── ReportServiceTests.cs
+├── frontend/                 # React + Vite
+│   ├── src/
+│   │   ├── pages/            # Full-page views
+│   │   ├── components/       # Shared UI components
+│   │   ├── contexts/         # AuthContext (JWT)
+│   │   └── utils/api.js      # Axios wrapper
+│   └── Dockerfile
+├── database/
+│   ├── schema.sql            # Full DDL (auto-runs in Docker)
+│   └── update.sql            # Migration patches
+├── docker-compose.yml        # db + backend + frontend + prometheus
+└── prometheus.yml            # Scrape config for mybrick-backend
 ```
 
-### 1.4 Git Setup
+### 1.2 API Endpoints
+
+| Controller | Routes |
+|------------|--------|
+| Auth | `POST /api/auth/login`, `POST /api/auth/register` |
+| Projects | CRUD `/api/projects` |
+| Workers | CRUD `/api/workers` |
+| Materials | CRUD `/api/materials` |
+| Tasks | CRUD `/api/tasks` |
+| Dashboard | `GET /api/dashboard` |
+| Reports | `GET /api/reports/*` |
+| Expenses | CRUD `/api/expenses` |
+| Invoices | CRUD `/api/invoices` |
+| Quotations | CRUD `/api/quotations` |
+| Notifications | `/api/notifications` |
+| Documents | `/api/documents` |
+| DailyReports | `/api/dailyreports` |
+| Attendances | `/api/attendances` |
+| Subcontractors | `/api/subcontractors` |
+| Metrics | `GET /metrics` (Prometheus) |
+
+### 1.3 Git Setup
 
 ```bash
-git init
-git remote add origin https://github.com/[username]/[project-name].git
+git remote add origin https://github.com/[username]/serverless-project.git
 
-# Create branches
+# Branch strategy
 git checkout -b dev
-git checkout -b feature/initial-app
+git checkout -b feature/[feature-name]
 ```
 
 Branch rules:
-- `main` → protected, trigger pipeline on merge
-- `dev` → integration, merge feature/* here first
+- `main` → protected, triggers pipeline on merge
+- `dev` → integration, merge `feature/*` here first
 - `feature/*` → daily work
-
-### 1.5 Repo Structure to Create
-
-```
-[project-name]/
-├── app/
-│   ├── app.py
-│   ├── requirements.txt
-│   └── Dockerfile
-├── Jenkinsfile
-├── terraform/
-│   ├── main.tf
-│   ├── variables.tf
-│   └── outputs.tf
-├── ansible/
-│   ├── inventory
-│   └── playbook.yml
-├── k8s/
-│   ├── deployment.yaml
-│   └── service.yaml
-├── monitoring/
-│   ├── prometheus.yml
-│   └── grafana-dashboard.json
-└── README.md
-```
 
 ---
 
@@ -110,7 +108,6 @@ Branch rules:
 ### 2.1 Install Jenkins
 
 ```bash
-# Option A: Docker (recommended for local)
 docker run -d \
   --name jenkins \
   -p 8080:8080 -p 50000:50000 \
@@ -118,7 +115,6 @@ docker run -d \
   -v /var/run/docker.sock:/var/run/docker.sock \
   jenkins/jenkins:lts
 
-# Get initial password
 docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 
@@ -147,32 +143,26 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "yourdockerhubuser/appname"
-        IMAGE_TAG  = "${BUILD_NUMBER}"
+        BACKEND_IMAGE  = "yourdockerhubuser/mybrick-backend"
+        FRONTEND_IMAGE = "yourdockerhubuser/mybrick-frontend"
+        IMAGE_TAG      = "${BUILD_NUMBER}"
     }
 
     stages {
         stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Build') {
-            steps {
-                sh 'pip install -r app/requirements.txt'
-            }
+            steps { checkout scm }
         }
 
         stage('Test') {
             steps {
-                sh 'python -m pytest app/tests/ -v'
+                sh 'dotnet test app/backend.tests/ConstructionSaaS.Tests.csproj --no-build -v n'
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ./app"
+                sh "docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} ./app/backend"
+                sh "docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} ./app/frontend"
             }
         }
 
@@ -185,7 +175,8 @@ pipeline {
                 )]) {
                     sh """
                         echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                        docker push ${BACKEND_IMAGE}:${IMAGE_TAG}
+                        docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}
                     """
                 }
             }
@@ -201,9 +192,7 @@ pipeline {
     }
 
     post {
-        always {
-            sh 'docker logout'
-        }
+        always { sh 'docker logout' }
     }
 }
 ```
@@ -220,9 +209,7 @@ pipeline {
 
 ## Phase 3 — Terraform + Ansible
 
-### 3.1 Terraform — What to Provision (Local/Minikube)
-
-> [!note] For local Kubernetes, Terraform creates namespace + configures cluster access
+### 3.1 Terraform — Provision Namespace
 
 ```hcl
 # terraform/main.tf
@@ -248,13 +235,8 @@ resource "kubernetes_namespace" "app_ns" {
 
 ```hcl
 # terraform/variables.tf
-variable "namespace" {
-  default = "production"
-}
-
-variable "app_name" {
-  default = "my-app"
-}
+variable "namespace" { default = "production" }
+variable "app_name"  { default = "mybrick" }
 ```
 
 ```hcl
@@ -265,13 +247,10 @@ output "namespace" {
 ```
 
 ```bash
-cd terraform
-terraform init
-terraform plan
-terraform apply
+cd terraform && terraform init && terraform plan && terraform apply
 ```
 
-### 3.2 Ansible — What to Configure
+### 3.2 Ansible — Configure Environment
 
 ```yaml
 # ansible/inventory
@@ -287,7 +266,6 @@ localhost ansible_connection=local
   tasks:
     - name: Verify kubectl available
       command: kubectl version --client
-      register: kubectl_check
 
     - name: Set kubeconfig context
       command: kubectl config use-context orbstack
@@ -308,163 +286,167 @@ kubectl get nodes
 # Expected: orbstack   Ready   control-plane,master
 ```
 
-### 4.2 Deployment YAML
+### 4.2 Backend Deployment
 
 ```yaml
-# k8s/deployment.yaml
+# k8s/backend-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-app
+  name: mybrick-backend
   namespace: production
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: my-app
+      app: mybrick-backend
   template:
     metadata:
       labels:
-        app: my-app
+        app: mybrick-backend
     spec:
       containers:
-        - name: my-app
-          image: yourdockerhubuser/appname:latest
+        - name: mybrick-backend
+          image: yourdockerhubuser/mybrick-backend:latest
           ports:
-            - containerPort: 5000
+            - containerPort: 5154
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=mybrick-db;Database=ConstructionSaaS;User=mybrick_user;Password=MyBrick@2026;"
+            - name: Jwt__Key
+              value: "super_secret_jwt_key_for_mybrick_construction_platform_2026"
           readinessProbe:
             httpGet:
-              path: /
-              port: 5000
-            initialDelaySeconds: 5
+              path: /metrics
+              port: 5154
+            initialDelaySeconds: 10
             periodSeconds: 10
 ```
 
-### 4.3 Service YAML
+### 4.3 Frontend Deployment
 
 ```yaml
-# k8s/service.yaml
+# k8s/frontend-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mybrick-frontend
+  namespace: production
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mybrick-frontend
+  template:
+    metadata:
+      labels:
+        app: mybrick-frontend
+    spec:
+      containers:
+        - name: mybrick-frontend
+          image: yourdockerhubuser/mybrick-frontend:latest
+          ports:
+            - containerPort: 80
+```
+
+### 4.4 Services
+
+```yaml
+# k8s/services.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-app-svc
+  name: mybrick-backend-svc
   namespace: production
 spec:
   type: NodePort
   selector:
-    app: my-app
+    app: mybrick-backend
   ports:
-    - port: 5000
-      targetPort: 5000
+    - port: 5154
+      targetPort: 5154
+      nodePort: 30154
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mybrick-frontend-svc
+  namespace: production
+spec:
+  type: NodePort
+  selector:
+    app: mybrick-frontend
+  ports:
+    - port: 80
+      targetPort: 80
       nodePort: 30080
 ```
 
-### 4.4 Verify Deploy
+### 4.5 Verify Deploy
 
 ```bash
 kubectl apply -f k8s/
 kubectl get pods -n production
-kubectl get svc -n production
+kubectl get svc  -n production
 
-# Access app (OrbStack exposes NodePort directly)
-http://localhost:30080
-```
-
-### 4.5 Expected Output
-
-```
-NAME                      READY   STATUS    RESTARTS   AGE
-my-app-xxxxxxxxx-xxxxx    1/1     Running   0          2m
-my-app-xxxxxxxxx-yyyyy    1/1     Running   0          2m
-
-NAME         TYPE       CLUSTER-IP     PORT(S)          AGE
-my-app-svc   NodePort   10.96.xx.xxx   5000:30080/TCP   2m
+# Access
+# Frontend: http://localhost:30080
+# Backend:  http://localhost:30154
+# Metrics:  http://localhost:30154/metrics
 ```
 
 ---
 
 ## Phase 5 — Monitoring
 
-### 5.1 Add /metrics to Flask App
+### 5.1 Prometheus — Already Wired
 
-```python
-# In app.py
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
-import time
+Backend uses `prometheus-net.AspNetCore`. Metrics auto-exposed at `/metrics`.
 
-REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint', 'status'])
-REQUEST_LATENCY = Histogram('http_request_duration_seconds', 'HTTP request latency')
+`app/prometheus.yml` scrapes `backend:5154/metrics` every 15s — already configured.
 
-@app.route('/metrics')
-def metrics():
-    return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
-```
+Custom business metrics in `app/backend/Monitoring/BusinessMetrics.cs`.
 
-Add to `requirements.txt`:
-```
-prometheus-client==0.20.0
-```
-
-### 5.2 Prometheus Config
-
-```yaml
-# monitoring/prometheus.yml
-global:
-  scrape_interval: 15s
-
-scrape_configs:
-  - job_name: 'my-app'
-    static_configs:
-      - targets: ['localhost:30080']
-```
+### 5.2 Run Prometheus (Docker Compose)
 
 ```bash
-# Run Prometheus
-prometheus --config.file=monitoring/prometheus.yml
-# UI at http://localhost:9090
+cd app && docker compose up prometheus
+# UI: http://localhost:9090
 ```
 
 ### 5.3 Grafana Setup
 
 ```bash
-# Run Grafana
 docker run -d -p 3000:3000 grafana/grafana
-# UI at http://localhost:3000 (admin/admin)
+# UI: http://localhost:3000 (admin/admin)
 ```
 
 1. Add datasource: **Prometheus** → `http://localhost:9090`
-2. Create dashboard with 4 panels:
+2. Create dashboard:
 
 | Panel | PromQL |
 |-------|--------|
-| Request Rate | `rate(http_requests_total[1m])` |
-| Error Rate | `rate(http_requests_total{status=~"5.."}[1m])` |
+| Request Rate | `rate(http_requests_received_total[1m])` |
+| Error Rate | `rate(http_requests_received_total{code=~"5.."}[1m])` |
 | Latency p95 | `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))` |
-| Pod Health | `up{job="my-app"}` |
+| Pod Health | `up{job="mybrick-backend"}` |
 
-3. **Export dashboard** → save JSON → `monitoring/grafana-dashboard.json`
+3. Export dashboard JSON → `monitoring/grafana-dashboard.json`
 
 ---
 
 ## README Completion
 
-Run this to find all placeholders remaining:
-
 ```bash
 grep -n "\[" README.md
 ```
 
-Replace each:
-
 | Placeholder | Replace with |
 |-------------|-------------|
-| `[ชื่อโปรเจค]` | actual project name |
 | `[username]` | GitHub username |
-| `[project-name]` | repo folder name |
-| `[app-name]` | Kubernetes deployment name |
+| `[project-name]` | `serverless-project` |
+| `[app-name]` | `mybrick` |
 | `[namespace]` | `production` |
-| `[resource]` | actual endpoint name (e.g. `notes`) |
-| `XXXXX` in NodePort | `30080` |
 | `[ชื่อ นามสกุล]` | real team member names + IDs |
 
 ---
@@ -474,26 +456,35 @@ Replace each:
 > [!todo] Before submission — verify all checked
 
 ### Files in Repo
-- [ ] `app/app.py` — working Flask/Express app with `/metrics`
-- [ ] `app/Dockerfile` — builds successfully
-- [ ] `app/requirements.txt` — all deps pinned
-- [ ] `Jenkinsfile` — all 6 stages defined
+
+- [x] `app/backend/` — .NET 8 API with `/metrics`
+- [x] `app/backend/Dockerfile`
+- [x] `app/backend.tests/` — xUnit tests
+- [x] `app/frontend/` — React/Vite
+- [x] `app/frontend/Dockerfile`
+- [x] `app/database/schema.sql`
+- [x] `app/docker-compose.yml`
+- [x] `app/prometheus.yml`
+- [ ] `Jenkinsfile`
 - [ ] `terraform/main.tf` + `variables.tf` + `outputs.tf`
 - [ ] `ansible/inventory` + `playbook.yml`
-- [ ] `k8s/deployment.yaml` + `service.yaml`
-- [ ] `monitoring/prometheus.yml` + `grafana-dashboard.json`
+- [ ] `k8s/backend-deployment.yaml` + `frontend-deployment.yaml` + `services.yaml`
+- [ ] `monitoring/grafana-dashboard.json`
 - [ ] `README.md` — zero `[placeholder]` remaining
 
 ### Pipeline Works
-- [ ] Push to `feature/*` → merge to `dev` → merge to `main` triggers Jenkins
-- [ ] All 6 Jenkins stages pass (green)
-- [ ] Docker image pushed to Docker Hub
+
+- [ ] Push `feature/*` → merge `dev` → merge `main` → triggers Jenkins
+- [ ] All Jenkins stages pass (green)
+- [ ] Docker images pushed to Docker Hub
 - [ ] Pods running in Kubernetes (`STATUS: Running`)
-- [ ] App accessible at `http://localhost:30080`
+- [ ] Frontend accessible at `http://localhost:30080`
+- [ ] Backend accessible at `http://localhost:30154`
 - [ ] `/metrics` returns Prometheus data
 - [ ] Grafana dashboard shows live data
 
 ### Demo Prep
+
 - [ ] Architecture diagram matches actual setup
 - [ ] Can explain each stage in pipeline
 - [ ] Live demo: push code → watch pipeline → app updates
@@ -505,7 +496,14 @@ Replace each:
 **Pods stuck `Pending`**
 ```bash
 kubectl describe pod [pod-name] -n production
-# Look at Events section
+# Check Events section
+```
+
+**Backend won't connect to MySQL**
+```bash
+# Verify DB pod running
+kubectl get pods -n production | grep db
+# Check connection string env var matches DB service name
 ```
 
 **Jenkins Docker Build fails**
@@ -516,13 +514,19 @@ sudo systemctl restart jenkins
 
 **Prometheus target `DOWN`**
 ```bash
-curl http://localhost:30080/metrics
-# If empty → /metrics not implemented in app
+curl http://localhost:30154/metrics
+# If empty → prometheus-net middleware not registered in Program.cs
 ```
 
 **Terraform apply fails (namespace exists)**
 ```bash
 terraform import kubernetes_namespace.app_ns production
+```
+
+**dotnet test fails (DB dependency)**
+```bash
+# Tests use mocked services — no DB needed
+# Check GlobalUsings.cs has xUnit + Moq references
 ```
 
 ---
@@ -532,7 +536,7 @@ terraform import kubernetes_namespace.app_ns production
 | Member | Owns |
 |--------|------|
 | Member 1 | App code (Phase 1) + README |
-| Member 2 | Jenkins + Dockerfile (Phase 2) |
+| Member 2 | Jenkins + Dockerfiles (Phase 2) |
 | Member 3 | Terraform + Ansible (Phase 3) |
 | Member 4 | Kubernetes + Monitoring (Phase 4–5) |
 
