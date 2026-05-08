@@ -8,10 +8,10 @@
 
 | รหัสนักศึกษา | ชื่อ-นามสกุล | ความรับผิดชอบ |
 |-------------|-------------|---------------|
-| 6XXXXXXX | ชื่อ นามสกุล | Git, App Development |
-| 6XXXXXXX | ชื่อ นามสกุล | Jenkins, Docker |
-| 6XXXXXXX | ชื่อ นามสกุล | Terraform, Ansible |
-| 6XXXXXXX | ชื่อ นามสกุล | Kubernetes, Monitoring |
+| B6607845 | นายภูผา บุญเทียม | Git, App Development |
+| B6643997 | นางสาวพิชญ์สินี ตีเมืองซ้าย | Jenkins, Docker |
+| B6639983 | นายโกวิท ภูอ่าง | Terraform, Ansible |
+| B6627416 | นายตะวัน นามโสม | Kubernetes, Monitoring |
 
 ---
 
