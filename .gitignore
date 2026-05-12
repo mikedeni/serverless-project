@@ -1,13 +1,30 @@
 # .NET
-app/**/bin/
-app/**/obj/
+**/bin/
+**/obj/
+**/.vs/
+*.user
+*.suo
+packages/
 
 # Node
-app/**/node_modules/
-app/**/.next/
-app/**/dist/
+**/node_modules/
+**/dist/
+**/.next/
+**/coverage/
 
-# Env
-.env
-.env.local
-.env*.local
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env*
+!.env.example
+
+# Tools
+graphify-out/
