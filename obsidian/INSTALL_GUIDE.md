@@ -11,7 +11,7 @@ course: ENG23 3074
 # 🔧 MyBrick — Installation Guide
 
 > Complete setup guide to run the full MyBrick pipeline and verify all deliverables.
-> Stack: .NET 8 + React/Vite + MySQL 8 + Docker + Jenkins + Terraform + Ansible + Kubernetes + Prometheus + Grafana
+> Stack: .NET 10 + React/Vite + MySQL 8 + Docker + Jenkins + Terraform + Ansible + Kubernetes + Prometheus + Grafana
 
 ---
 
@@ -25,7 +25,7 @@ Install all tools before starting.
 |------|---------|---------|
 | Git | ≥ 2.x | https://git-scm.com |
 | Docker Desktop / OrbStack | latest | https://orbstack.dev |
-| .NET SDK | 8.0 | https://dotnet.microsoft.com/download/dotnet/8.0 |
+| .NET SDK | 10.0 | https://dotnet.microsoft.com/download/dotnet/10.0 |
 | Node.js | ≥ 20.x | https://nodejs.org |
 | kubectl | ≥ 1.28 | https://kubernetes.io/docs/tasks/tools |
 | Terraform | ≥ 1.x | https://developer.hashicorp.com/terraform/install |
@@ -160,6 +160,8 @@ Ansible verifies kubectl, sets context to `orbstack`, and ensures namespace exis
 kubectl apply -f k8s/
 ```
 
+Deploys all services: backend (2 replicas), frontend (2 replicas), MySQL, Prometheus, Grafana.
+
 Monitor rollout:
 
 ```bash
@@ -174,6 +176,9 @@ mybrick-backend-xxxxxxxxx-xxxxx     1/1     Running   0          2m
 mybrick-backend-xxxxxxxxx-yyyyy     1/1     Running   0          2m
 mybrick-frontend-xxxxxxxxx-aaaaa    1/1     Running   0          2m
 mybrick-frontend-xxxxxxxxx-bbbbb    1/1     Running   0          2m
+mysql-xxxxxxxxx-xxxxx               1/1     Running   0          2m
+prometheus-xxxxxxxxx-xxxxx          1/1     Running   0          2m
+grafana-xxxxxxxxx-xxxxx             1/1     Running   0          2m
 ```
 
 Verify services:
@@ -185,6 +190,9 @@ kubectl get svc -n production
 ```
 mybrick-backend-svc    NodePort   ...   5154:30154/TCP
 mybrick-frontend-svc   NodePort   ...   80:30080/TCP
+mysql-svc              ClusterIP  ...   3306/TCP
+prometheus-svc         NodePort   ...   9090:30090/TCP
+grafana-svc            NodePort   ...   3000:30300/TCP
 ```
 
 Access via Kubernetes:
@@ -194,33 +202,54 @@ Access via Kubernetes:
 | Frontend | http://localhost:30080 |
 | Backend | http://localhost:30154 |
 | Metrics | http://localhost:30154/metrics |
+| Prometheus | http://localhost:30090 |
+| Grafana | http://localhost:30300 |
 
 ---
 
-## Step 7 — Setup Monitoring (Grafana)
+## Step 7 — Verify Monitoring Stack
 
-Prometheus is already running in Docker Compose (port 9090).
+Prometheus and Grafana are auto-deployed in Kubernetes with ConfigMaps.
 
-### Run Grafana
+### Grafana — Auto-Provisioned
 
 ```bash
-docker run -d -p 3000:3000 --name grafana grafana/grafana
+kubectl get pods -n production -l app=grafana
+# grafana-xxxxxxxxx-xxxxx   1/1     Running
 ```
 
-### Configure datasource
+Login to Grafana:
 
-1. Open http://localhost:3000 (admin / admin)
-2. **Connections → Data sources → Add → Prometheus**
-3. URL: `http://host.docker.internal:9090`
-4. Click **Save & Test** — must show "Data source is working"
+```
+URL: http://localhost:30300
+Username: admin
+Password: admin
+```
 
-### Import dashboard
+### Dashboard & Datasource — Auto-Configured
 
-1. **Dashboards → Import**
-2. Upload `monitoring/grafana-dashboard.json`
-3. Select Prometheus datasource → **Import**
+1. **Datasources** — Prometheus already connected at `http://prometheus-svc:9090` ✅
+2. **Dashboards → MyBrick — API Dashboard** — auto-imported ✅
 
-Dashboard shows 6 panels: Request Rate, Error Rate, Latency p95, Pod Health, Total Projects, Total Expenses (THB).
+Dashboard displays 6 live panels:
+- Request Rate (req/s)
+- Error Rate (failed/s)
+- Latency p95
+- Pod Health
+- Total Projects
+- Total Expenses (THB)
+
+### Prometheus Verification
+
+```bash
+curl http://localhost:30090/api/v1/targets
+# Should show: mybrick-backend health = "up"
+
+curl http://localhost:30090/api/v1/query?query=up
+# Should return metric value = 1 (healthy)
+```
+
+See [[SEALED_SECRETS]] for credential management (app secrets + MySQL passwords encrypted in K8s).
 
 ---
 
@@ -296,7 +325,7 @@ Verify everything before submission:
 
 ### Files in Repository
 
-- [x] `app/backend/` — .NET 8 API with `/metrics`
+- [x] `app/backend/` — .NET 10 API with `/metrics`
 - [x] `app/backend/Dockerfile`
 - [x] `app/backend.tests/` — xUnit tests
 - [x] `app/frontend/` — React/Vite
@@ -308,7 +337,9 @@ Verify everything before submission:
 - [x] `terraform/main.tf` + `variables.tf` + `outputs.tf`
 - [x] `ansible/inventory` + `playbook.yml`
 - [x] `k8s/backend-deployment.yaml` + `frontend-deployment.yaml` + `services.yaml`
-- [x] `monitoring/grafana-dashboard.json`
+- [x] `k8s/prometheus.yaml` + `grafana.yaml` + `grafana-dashboard-configmap.yaml`
+- [x] `k8s/mysql.yaml` + `mysql-init-job.yaml`
+- [x] `k8s/sealed-app-secrets.yaml` + `sealed-mysql-credentials.yaml`
 - [x] `README.md`
 
 ### Pipeline Verified
@@ -320,8 +351,11 @@ Verify everything before submission:
 - [ ] Frontend accessible at `http://localhost:30080`
 - [ ] Backend accessible at `http://localhost:30154`
 - [ ] `/metrics` returns Prometheus data
-- [ ] Prometheus target `mybrick-backend` shows **UP**
-- [ ] Grafana dashboard shows live data
+- [ ] Prometheus running in K8s (`kubectl get pods -n production` shows prometheus pod)
+- [ ] Prometheus target `mybrick-backend` shows **UP** (`curl http://localhost:30090/api/v1/targets`)
+- [ ] Grafana running in K8s (`kubectl get pods -n production` shows grafana pod)
+- [ ] Grafana dashboard auto-provisioned at http://localhost:30300
+- [ ] All 6 dashboard panels show live metrics (Request Rate, Error Rate, Latency, Pod Health, Projects, Expenses)
 
 ### Demo Prep
 
@@ -374,9 +408,35 @@ sudo systemctl restart jenkins
 **Prometheus target DOWN**
 
 ```bash
-curl http://localhost:5154/metrics
+curl http://localhost:30154/metrics
 # Must return prometheus text format
 # If empty — MapMetrics() not registered in Program.cs
+```
+
+**Grafana dashboard shows "No data"**
+
+```bash
+# Check Prometheus datasource URL
+curl -u admin:admin http://localhost:30300/api/datasources
+# url should be: http://prometheus-svc:9090
+
+# Check Prometheus has metrics
+curl http://localhost:30090/api/v1/query?query=microsoft_aspnetcore_hosting_total_requests
+# Should return non-empty result array
+
+# Reload Grafana dashboard
+kubectl rollout restart deployment/grafana -n production
+```
+
+**MySQL connection string not working**
+
+```bash
+# Check sealed secrets auto-decrypted
+kubectl get secrets -n production
+# Should show: app-secrets, mysql-credentials (decrypted from sealed versions)
+
+kubectl get secret app-secrets -n production -o jsonpath='{.data}' | base64 -d
+# Verify ConnectionString key exists
 ```
 
 ---
