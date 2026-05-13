@@ -106,7 +106,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "up{job=\"mybrick-backend\"} or vector(0)",
+              "expr": "up{job=\"mybrick-backend\"}",
               "legendFormat": "Backend",
               "refId": "A"
             }
