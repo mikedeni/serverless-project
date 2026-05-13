@@ -28,3 +28,8 @@ Thumbs.db
 
 # Tools
 graphify-out/
+
+# Terraform
+.terraform/
+terraform.tfstate*
+*.tfvars
