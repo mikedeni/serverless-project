@@ -46,8 +46,8 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "rate(http_requests_received_total{job=\"mybrick-backend\"}[1m])",
-              "legendFormat": "{{method}} {{route}} {{code}}",
+              "expr": "rate(microsoft_aspnetcore_hosting_total_requests[1m])",
+              "legendFormat": "requests/sec",
               "refId": "A"
             }
           ],
@@ -66,12 +66,12 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "rate(http_requests_received_total{job=\"mybrick-backend\",code=~\"5..\"}[1m])",
-              "legendFormat": "5xx errors",
+              "expr": "rate(microsoft_aspnetcore_hosting_failed_requests[1m])",
+              "legendFormat": "failed/sec",
               "refId": "A"
             }
           ],
-          "title": "Error Rate (5xx/s)",
+          "title": "Error Rate (failed/s)",
           "type": "timeseries"
         },
         {
@@ -86,7 +86,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"mybrick-backend\"}[5m]))",
+              "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
               "legendFormat": "p95 latency",
               "refId": "A"
             }
@@ -106,7 +106,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "up{job=\"mybrick-backend\"}",
+              "expr": "up{job=\"mybrick-backend\"} or vector(0)",
               "legendFormat": "Backend",
               "refId": "A"
             }
