@@ -15,7 +15,7 @@ FROM nginx:stable-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Custom Nginx config to handle SPA routing
-RUN printf "server {\n  listen 80;\n  location / {\n    root /usr/share/nginx/html;\n    index index.html;\n    try_files \$uri \$uri/ /index.html;\n  }\n  location /api {\n    proxy_pass http://backend:5154;\n  }\n  location /uploads {\n    proxy_pass http://backend:5154/uploads;\n  }\n}\n" > /etc/nginx/conf.d/default.conf
+RUN printf "server {\n  listen 80;\n  location / {\n    root /usr/share/nginx/html;\n    index index.html;\n    try_files \$uri \$uri/ /index.html;\n  }\n  location /api {\n    proxy_pass http://mybrick-backend-svc:5154;\n  }\n  location /uploads {\n    proxy_pass http://mybrick-backend-svc:5154/uploads;\n  }\n}\n" > /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
