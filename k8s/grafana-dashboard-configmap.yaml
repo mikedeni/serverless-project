@@ -46,7 +46,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "rate(microsoft_aspnetcore_hosting_total_requests[1m])",
+              "expr": "increase(microsoft_aspnetcore_hosting_total_requests[1m])",
               "legendFormat": "requests/sec",
               "refId": "A"
             }
@@ -66,7 +66,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "rate(microsoft_aspnetcore_hosting_failed_requests[1m])",
+              "expr": "increase(microsoft_aspnetcore_hosting_failed_requests[1m])",
               "legendFormat": "failed/sec",
               "refId": "A"
             }
@@ -86,7 +86,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-              "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+              "expr": "histogram_quantile(0.95, increase(http_request_duration_seconds_bucket[5m]))",
               "legendFormat": "p95 latency",
               "refId": "A"
             }
