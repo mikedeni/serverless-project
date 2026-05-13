@@ -1,0 +1,41 @@
+---
+# Job to initialize MySQL schema
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mysql-init
+  namespace: production
+spec:
+  template:
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: mysql-init
+        image: mysql:8.0
+        command:
+          - /bin/sh
+          - -c
+          - |
+            echo "Waiting for MySQL to be ready..."
+            until mysqladmin ping -h mysql-service -u mybrick_user -p$MYSQL_PASSWORD --silent; do
+              echo 'MySQL not ready, waiting...'
+              sleep 5
+            done
+            echo "MySQL is ready! Loading schema..."
+            mysql -h mysql-service -u mybrick_user -p$MYSQL_PASSWORD ConstructionSaaS < /schema/schema.sql || true
+            echo "Schema initialization complete"
+        env:
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-credentials
+              key: MYSQL_PASSWORD
+        volumeMounts:
+        - name: schema
+          mountPath: /schema
+      volumes:
+      - name: schema
+        configMap:
+          name: mysql-schema-init
+      restartPolicy: Never
+  backoffLimit: 3

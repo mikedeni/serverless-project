@@ -22,9 +22,15 @@ spec:
             - containerPort: 5154
           env:
             - name: ConnectionStrings__DefaultConnection
-              value: "Server=mybrick-db;Database=ConstructionSaaS;User=mybrick_user;Password=MyBrick@2026;"
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: ConnectionString
             - name: Jwt__Key
-              value: "super_secret_jwt_key_for_mybrick_construction_platform_2026"
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: Jwt__Key
             - name: ASPNETCORE_URLS
               value: "http://+:5154"
           readinessProbe:
