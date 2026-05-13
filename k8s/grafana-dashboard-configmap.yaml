@@ -35,7 +35,7 @@ data:
       "links": [],
       "panels": [
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "fieldConfig": {
             "defaults": { "color": { "mode": "palette-classic" }, "unit": "reqps" },
             "overrides": []
@@ -45,7 +45,7 @@ data:
           "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
           "targets": [
             {
-              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
               "expr": "increase(microsoft_aspnetcore_hosting_total_requests[1m])",
               "legendFormat": "requests/sec",
               "refId": "A"
@@ -55,7 +55,7 @@ data:
           "type": "timeseries"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "fieldConfig": {
             "defaults": { "color": { "mode": "palette-classic" }, "unit": "reqps" },
             "overrides": []
@@ -65,7 +65,7 @@ data:
           "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
           "targets": [
             {
-              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
               "expr": "increase(microsoft_aspnetcore_hosting_failed_requests[1m])",
               "legendFormat": "failed/sec",
               "refId": "A"
@@ -75,7 +75,7 @@ data:
           "type": "timeseries"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "fieldConfig": {
             "defaults": { "color": { "mode": "palette-classic" }, "unit": "s" },
             "overrides": []
@@ -85,7 +85,7 @@ data:
           "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
           "targets": [
             {
-              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
               "expr": "histogram_quantile(0.95, increase(http_request_duration_seconds_bucket[5m]))",
               "legendFormat": "p95 latency",
               "refId": "A"
@@ -95,7 +95,7 @@ data:
           "type": "timeseries"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "fieldConfig": {
             "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "green", "value": 1 }] } },
             "overrides": []
@@ -105,7 +105,7 @@ data:
           "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
           "targets": [
             {
-              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
               "expr": "up{job=\"mybrick-backend\"} or vector(0)",
               "legendFormat": "Backend",
               "refId": "A"
@@ -115,7 +115,7 @@ data:
           "type": "stat"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "fieldConfig": {
             "defaults": { "color": { "mode": "thresholds" }, "unit": "none", "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": 0 }] } },
             "overrides": []
@@ -125,7 +125,7 @@ data:
           "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
           "targets": [
             {
-              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
               "expr": "mybrick_projects_total",
               "legendFormat": "Projects",
               "refId": "A"
@@ -135,7 +135,7 @@ data:
           "type": "stat"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "fieldConfig": {
             "defaults": { "color": { "mode": "palette-classic" }, "unit": "currencyTHB" },
             "overrides": []
@@ -145,7 +145,7 @@ data:
           "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
           "targets": [
             {
-              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
               "expr": "mybrick_expenses_total_baht",
               "legendFormat": "Total Expenses (THB)",
               "refId": "A"
