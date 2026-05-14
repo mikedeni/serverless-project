@@ -1,5 +1,7 @@
 pipeline {
-    agent any
+    agent {
+        label 'mac'
+    }
 
     environment {
         BACKEND_IMAGE  = "mikedeni/mybrick-backend"
