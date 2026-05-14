@@ -296,8 +296,58 @@ Manage Jenkins → Plugins → Available → install:
 
 - Git Plugin
 - Pipeline
-- Docker Pipeline
 - GitHub Integration Plugin
+
+### 8.2.5 Install build tools in Jenkins container
+
+Jenkins container needs: dotnet, docker, terraform, kubectl, ansible
+
+```bash
+# Install dotnet 10.0
+docker exec -u 0 jenkins bash -c '
+  curl -L https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
+  chmod +x dotnet-install.sh
+  ./dotnet-install.sh --channel 10.0 --install-dir /usr/local/dotnet
+  ln -s /usr/local/dotnet/dotnet /usr/local/bin/dotnet
+  apt-get update && apt-get install -y libicu*
+'
+
+# Install kubectl, terraform, ansible
+docker exec -u 0 jenkins bash -c '
+  curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
+  chmod +x kubectl && mv kubectl /usr/local/bin/
+  apt-get install -y ansible
+'
+
+# Install terraform
+docker exec -u 0 jenkins bash -c '
+  TERRAFORM_VERSION=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o "\"tag_name\": \"v[0-9.]*\"" | head -1 | cut -d"\"" -f4 | sed "s/v//")
+  curl -fsSL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_arm64.zip -o terraform.zip
+  unzip -o terraform.zip -d /usr/local/bin/ && rm terraform.zip
+'
+
+# Fix docker socket permissions
+docker exec -u 0 jenkins chmod 666 /var/run/docker.sock
+```
+
+### 8.2.6 Setup kubeconfig in Jenkins
+
+Copy kubeconfig from host → Jenkins container:
+
+```bash
+kubectl config view --raw > /tmp/kubeconfig.yaml
+docker exec -u 0 jenkins mkdir -p /var/jenkins_home/.kube
+docker cp /tmp/kubeconfig.yaml jenkins:/var/jenkins_home/.kube/config
+docker exec -u 0 jenkins bash -c 'chown jenkins:jenkins /var/jenkins_home/.kube /var/jenkins_home/.kube/config && chmod 600 /var/jenkins_home/.kube/config'
+```
+
+Update kubeconfig server IP (replace 127.0.0.1 with valid cert IP):
+
+```bash
+# Find valid IP from certificate
+VALID_IP=192.168.139.2  # or check: docker exec jenkins curl -k https://127.0.0.1:26443 2>&1 | grep valid
+docker exec jenkins sed -i "s|https://127.0.0.1:26443|https://${VALID_IP}:26443|g" /var/jenkins_home/.kube/config
+```
 
 ### 8.3 Add credentials
 
@@ -332,6 +382,12 @@ Push any change to `main` → Jenkins auto-triggers. All 5 stages must pass:
 ```
 Checkout ✅ → Test ✅ → Docker Build ✅ → Push to Hub ✅ → Deploy ✅
 ```
+
+### 8.7 Terraform configuration notes
+
+- `terraform/main.tf` uses data source (not resource) to reference existing `production` namespace created by ansible
+- Deploy stage order: **Ansible → Terraform → kubectl** (ansible creates namespace first)
+- Provider uses `insecure = true` for local K8s clusters (skips TLS verification for self-signed certs)
 
 ---
 
