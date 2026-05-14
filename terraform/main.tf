@@ -10,6 +10,7 @@ terraform {
 provider "kubernetes" {
   config_path    = "~/.kube/config"
   config_context = "orbstack"
+  insecure       = true
 }
 
 resource "kubernetes_namespace" "mybrick" {
