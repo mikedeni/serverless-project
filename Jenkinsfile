@@ -4,6 +4,7 @@ pipeline {
     }
 
     environment {
+        PATH = "/opt/homebrew/bin:/usr/local/bin:${PATH}"
         BACKEND_IMAGE  = "mikedeni/mybrick-backend"
         FRONTEND_IMAGE = "mikedeni/mybrick-frontend"
         IMAGE_TAG      = "${BUILD_NUMBER}"
