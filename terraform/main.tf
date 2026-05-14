@@ -13,11 +13,8 @@ provider "kubernetes" {
   insecure       = true
 }
 
-resource "kubernetes_namespace" "mybrick" {
+data "kubernetes_namespace" "mybrick" {
   metadata {
     name = var.namespace
-    labels = {
-      app = var.app_name
-    }
   }
 }
