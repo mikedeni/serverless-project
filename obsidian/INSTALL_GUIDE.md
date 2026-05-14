@@ -274,6 +274,22 @@ docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
 Open http://localhost:8080 and complete setup wizard.
 
+### 8.1b Configure Jenkins URL
+
+After setup wizard, go to **Manage Jenkins → System** (or `http://localhost:8080/configure`):
+
+Set **Instance Configuration → Jenkins URL:**
+```
+http://localhost:8080/
+```
+
+This URL is required for:
+- Email notifications
+- GitHub PR status updates
+- BUILD_URL environment variable
+
+For webhooks from GitHub: use `http://localhost:8080/github-webhook/`
+
 ### 8.2 Install plugins
 
 Manage Jenkins → Plugins → Available → install:
