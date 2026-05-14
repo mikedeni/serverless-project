@@ -20,7 +20,6 @@ namespace ConstructionSaaS.Api.Controllers
         private int GetCompanyId() => int.Parse(User.FindFirst("company_id")?.Value ?? "0");
         private int GetUserId() => int.Parse(User.FindFirst("user_id")?.Value ?? "0");
 
-        [AllowAnonymous] // Will restrict by role in Phase 5.2, but currently GET allows anyone? Wait, plan says GET (All), POST (admin, staff).
         [HttpGet("project/{projectId}")]
         [Authorize(Roles = "admin,staff,foreman,viewer")]
         public async Task<IActionResult> GetProjectDocuments(int projectId)
