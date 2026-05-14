@@ -32,10 +32,18 @@ pipeline {
 
         stage('Push to Hub') {
             steps {
-                sh '''
-                    docker push ${BACKEND_IMAGE}:${IMAGE_TAG}
-                    docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}
-                '''
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        mkdir -p ~/.docker
+                        echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"auth\":\"$(echo -n $DOCKER_USER:$DOCKER_PASS | base64)\"}}}" > ~/.docker/config.json
+                        docker push ${BACKEND_IMAGE}:${IMAGE_TAG}
+                        docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}
+                    '''
+                }
             }
         }
 
