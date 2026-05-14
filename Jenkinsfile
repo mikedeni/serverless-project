@@ -47,8 +47,8 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh 'cd terraform && terraform init && terraform apply -auto-approve'
                 sh 'cd ansible && ansible-playbook -i inventory playbook.yml'
+                sh 'cd terraform && terraform init && terraform apply -auto-approve'
                 sh 'kubectl apply -f k8s/'
             }
         }
