@@ -133,6 +133,18 @@ serverless-project/
 | Prometheus | ≥ 2.x | เก็บ metrics |
 | Grafana | ≥ 10.x | แสดง dashboard |
 
+### ยืนยันการติดตั้ง
+
+```bash
+git --version
+docker --version
+dotnet --version
+node --version
+kubectl version --client
+terraform --version
+ansible --version
+```
+
 ---
 
 ## 🏃 วิธีรันโปรเจค (Quick Start)
@@ -347,6 +359,37 @@ feature/*   — พัฒนา feature แยกกัน
 
 ---
 
+## ✅ Deliverables Checklist
+
+### ไฟล์ใน Repository
+- [x] `app/backend/` — .NET Web API with `/metrics`
+- [x] `app/backend/Dockerfile`
+- [x] `app/backend.tests/` — xUnit tests
+- [x] `app/frontend/` — React/Vite
+- [x] `app/frontend/Dockerfile`
+- [x] `app/database/schema.sql`
+- [x] `app/docker-compose.yml`
+- [x] `app/prometheus.yml`
+- [x] `Jenkinsfile`
+- [x] `terraform/main.tf` + `variables.tf` + `outputs.tf`
+- [x] `ansible/inventory` + `playbook.yml`
+- [x] `k8s/backend-deployment.yaml` + `frontend-deployment.yaml` + `services.yaml`
+- [x] `k8s/prometheus.yaml` + `grafana.yaml`
+
+### Pipeline ยืนยันแล้ว
+- [ ] Push to `main` triggers Jenkins automatically
+- [ ] All 5 Jenkins stages pass (green)
+- [ ] Docker images pushed to Docker Hub
+- [ ] Pods running in Kubernetes (`STATUS: Running`)
+- [ ] Frontend accessible at `http://localhost:30080`
+- [ ] Backend accessible at `http://localhost:30154`
+- [ ] `/metrics` returns Prometheus data
+- [ ] Prometheus target `mybrick-backend` shows **UP**
+- [ ] Grafana dashboard auto-provisioned
+- [ ] All dashboard panels show live metrics
+
+---
+
 ## 🐛 ปัญหาที่พบบ่อย (Troubleshooting)
 
 **Pods ค้างอยู่ที่ `Pending`**
@@ -378,6 +421,29 @@ curl http://localhost:30154/metrics
 terraform import kubernetes_namespace.mybrick production
 ```
 
+**Grafana dashboard shows "No data"**
+```bash
+# Check Prometheus datasource URL
+curl -u admin:admin http://localhost:30300/api/datasources
+# url should be: http://prometheus-svc:9090
+
+# Check Prometheus has metrics
+curl http://localhost:30090/api/v1/query?query=up
+
+# Reload Grafana dashboard
+kubectl rollout restart deployment/grafana -n production
+```
+
+**MySQL connection string not working**
+```bash
+# Check sealed secrets auto-decrypted
+kubectl get secrets -n production
+# Should show: app-secrets, mysql-credentials
+
+kubectl get secret app-secrets -n production -o jsonpath='{.data}' | base64 -d
+# Verify ConnectionString key exists
+```
+
 ---
 
 ## 📚 เอกสารอ้างอิง
@@ -391,3 +457,11 @@ terraform import kubernetes_namespace.mybrick production
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Documentation](https://grafana.com/docs/)
 - [prometheus-net](https://github.com/prometheus-net/prometheus-net)
+
+---
+
+## 🔗 เอกสารที่เกี่ยวข้อง
+
+- [INSTALL_GUIDE.md](obsidian/INSTALL_GUIDE.md) — Installation guide ขั้นตอนละเอียด
+- [PIPELINE_CHECKLIST](obsidian/PIPELINE_CHECKLIST.md) — Tick-box version
+- [DEMO_GUIDE](obsidian/DEMO_GUIDE.md) — Demo steps
