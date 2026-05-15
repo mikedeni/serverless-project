@@ -7,6 +7,11 @@ metadata:
     app: mybrick-backend
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 100%
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: mybrick-backend
@@ -15,9 +20,11 @@ spec:
       labels:
         app: mybrick-backend
     spec:
+      terminationGracePeriodSeconds: 5
       containers:
         - name: mybrick-backend
           image: mikedeni/mybrick-backend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 5154
           env:
@@ -37,8 +44,9 @@ spec:
             httpGet:
               path: /metrics
               port: 5154
-            initialDelaySeconds: 10
-            periodSeconds: 10
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            failureThreshold: 3
           livenessProbe:
             httpGet:
               path: /metrics
