@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    triggers {
+        githubPush()
+    }
+
     environment {
         PATH = "/opt/homebrew/bin:/usr/local/bin:${PATH}"
         BACKEND_IMAGE  = "mikedeni/mybrick-backend"
