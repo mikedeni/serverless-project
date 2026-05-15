@@ -10,6 +10,7 @@ pipeline {
         BACKEND_IMAGE  = "mikedeni/mybrick-backend"
         FRONTEND_IMAGE = "mikedeni/mybrick-frontend"
         IMAGE_TAG      = "${BUILD_NUMBER}"
+        DOCKER_BUILDKIT = "1"
     }
 
     stages {
@@ -19,16 +20,23 @@ pipeline {
             }
         }
 
-        stage('Test') {
-            steps {
-                sh 'dotnet test app/backend.tests/ConstructionSaaS.Tests.csproj -v n'
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                sh "docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} ./app/backend"
-                sh "docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} ./app/frontend"
+        stage('Test & Build (parallel)') {
+            parallel {
+                stage('Test') {
+                    steps {
+                        sh 'dotnet test app/backend.tests/ConstructionSaaS.Tests.csproj -v minimal'
+                    }
+                }
+                stage('Docker Build Backend') {
+                    steps {
+                        sh "docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -t ${BACKEND_IMAGE}:latest ./app/backend"
+                    }
+                }
+                stage('Docker Build Frontend') {
+                    steps {
+                        sh "docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} -t ${FRONTEND_IMAGE}:latest ./app/frontend"
+                    }
+                }
             }
         }
 
@@ -42,12 +50,11 @@ pipeline {
                     sh '''
                         rm -f ~/.docker/config.json
                         echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker tag ${BACKEND_IMAGE}:${IMAGE_TAG} ${BACKEND_IMAGE}:latest
-                        docker tag ${FRONTEND_IMAGE}:${IMAGE_TAG} ${FRONTEND_IMAGE}:latest
-                        docker push ${BACKEND_IMAGE}:${IMAGE_TAG}
-                        docker push ${BACKEND_IMAGE}:latest
-                        docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}
-                        docker push ${FRONTEND_IMAGE}:latest
+                        docker push ${BACKEND_IMAGE}:${IMAGE_TAG} &
+                        docker push ${BACKEND_IMAGE}:latest &
+                        docker push ${FRONTEND_IMAGE}:${IMAGE_TAG} &
+                        docker push ${FRONTEND_IMAGE}:latest &
+                        wait
                     '''
                 }
             }
@@ -55,18 +62,16 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh 'cd ansible && ansible-playbook -i inventory playbook.yml'
-                sh 'cd terraform && terraform init && terraform apply -auto-approve'
                 sh 'kubectl apply -f k8s/'
-                sh 'kubectl rollout restart deployment/mybrick-backend -n production || true'
-                sh 'kubectl rollout restart deployment/mybrick-frontend -n production || true'
+                sh "kubectl set image deployment/mybrick-backend mybrick-backend=${BACKEND_IMAGE}:${IMAGE_TAG} -n production"
+                sh "kubectl set image deployment/mybrick-frontend mybrick-frontend=${FRONTEND_IMAGE}:${IMAGE_TAG} -n production"
             }
         }
     }
 
     post {
         always {
-            sh 'docker logout'
+            sh 'docker logout || true'
         }
     }
 }
