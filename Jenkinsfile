@@ -42,8 +42,12 @@ pipeline {
                     sh '''
                         rm -f ~/.docker/config.json
                         echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker tag ${BACKEND_IMAGE}:${IMAGE_TAG} ${BACKEND_IMAGE}:latest
+                        docker tag ${FRONTEND_IMAGE}:${IMAGE_TAG} ${FRONTEND_IMAGE}:latest
                         docker push ${BACKEND_IMAGE}:${IMAGE_TAG}
+                        docker push ${BACKEND_IMAGE}:latest
                         docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}
+                        docker push ${FRONTEND_IMAGE}:latest
                     '''
                 }
             }
@@ -54,6 +58,8 @@ pipeline {
                 sh 'cd ansible && ansible-playbook -i inventory playbook.yml'
                 sh 'cd terraform && terraform init && terraform apply -auto-approve'
                 sh 'kubectl apply -f k8s/'
+                sh 'kubectl rollout restart deployment/mybrick-backend -n production || true'
+                sh 'kubectl rollout restart deployment/mybrick-frontend -n production || true'
             }
         }
     }
