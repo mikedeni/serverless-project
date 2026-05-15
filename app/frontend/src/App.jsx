@@ -23,6 +23,7 @@ import SubcontractorList from './pages/SubcontractorList';
 import NotificationList from './pages/NotificationList';
 import DocumentList from './pages/DocumentList';
 import GlobalInvoices from './pages/GlobalInvoices';
+import Settings from './pages/Settings';
 import './App.css';
 import MainLayout from './components/MainLayout';
 import { Outlet } from 'react-router-dom';
@@ -68,6 +69,7 @@ function App() {
             <Route path="/subcontractors" element={<SubcontractorList />} />
             <Route path="/notifications" element={<NotificationList />} />
             <Route path="/projects/:id/documents" element={<DocumentList />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>
       </AuthProvider>
