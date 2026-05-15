@@ -17,6 +17,7 @@ packages/
 .idea/
 *.swp
 *.swo
+*.lscache
 
 # OS
 .DS_Store
