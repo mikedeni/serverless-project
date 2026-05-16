@@ -60,6 +60,22 @@ pipeline {
             }
         }
 
+        stage('Provision Infrastructure') {
+            steps {
+                sh '''
+                    cd terraform
+                    terraform init -input=false
+                    terraform apply -auto-approve -input=false
+                '''
+            }
+        }
+
+        stage('Configure Environment') {
+            steps {
+                sh 'ansible-playbook -i ansible/inventory ansible/playbook.yml'
+            }
+        }
+
         stage('Deploy') {
             steps {
                 sh 'kubectl apply -f k8s/'
