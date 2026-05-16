@@ -38,7 +38,7 @@ const Dashboard = () => {
             <header className="top-header" style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <p className="text-label-caps" style={{ marginBottom: '4px' }}>Overview</p>
-                    <h1 className="text-h1">HHH</h1>
+                    <h1 className="text-h1">Dashboard</h1>
                 </div>
                 <Link to="/projects/new" className="btn-primary" style={{ textDecoration: 'none' }}>
                     <Plus size={20} /> New Project
